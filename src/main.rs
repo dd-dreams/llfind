@@ -10,7 +10,6 @@ Positional arguments:
     path1, path2, ...
 
 Optional arguments:
-    --help,    -h      Prints help
     --version, -v      Prints the version
 ";
 
