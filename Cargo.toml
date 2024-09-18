@@ -4,6 +4,10 @@ version = "1.0.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
+[profile.release]
+lto = true
+strip = "debuginfo"
+
 [dependencies]
 elf = "0.7"
 windows-sys = { version = "0.59", features = ["Win32_System_SystemServices", "Win32_System_Diagnostics_Debug", "Win32_System_SystemInformation"] }
