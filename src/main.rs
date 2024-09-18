@@ -1,10 +1,10 @@
 mod find;
 use std::env::args as args_fn;
 
-const HELP: &str = "llfinder {} - find dynamically linked libraries in binaries
+const HELP: &str = "llfind {} - find dynamically linked libraries in binaries
 
 Usage:
-    llfinder <path1> <path2> ...
+    llfind <path1> <path2> ...
 
 Positional arguments:
     path1, path2, ...

@@ -23,27 +23,27 @@ jobs:
           - build: Linux x86-64
             os: ubuntu-20.04
             target: x86_64-unknown-linux-gnu
-            archive_name: llfinder-linux-x86_64.gz
+            archive_name: llfind-linux-x86_64.gz
 
           - build: Windows x86-64
             os: windows-latest
             target: x86_64-pc-windows-gnu
-            archive_name: llfinder-windows-gnu-x86_64.zip
+            archive_name: llfind-windows-gnu-x86_64.zip
 
           - build: Windows x86-64 MSVC
             os: windows-latest
             target: x86_64-pc-windows-msvc
-            archive_name: llfinder-windows-msvc-x86_64.zip
+            archive_name: llfind-windows-msvc-x86_64.zip
 
           - build: macOS x86-64
             os: macos-latest
             target: x86_64-apple-darwin
-            archive_name: llfinder-macos-x86_64.gz
+            archive_name: llfind-macos-x86_64.gz
 
           - build: macOS AArch64/ARM
             os: macos-latest
             target: aarch64-apple-darwin
-            archive_name: llfinder-macos-aarch64.gz
+            archive_name: llfind-macos-aarch64.gz
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -62,11 +62,11 @@ jobs:
       - name: Compress Windows
         if: matrix.os == 'windows-latest'
         shell: pwsh
-        run: Get-ChildItem -Path ./target -Recurse -Filter 'llfinder.exe' | Compress-Archive -DestinationPath ./${{ matrix.archive_name }}
+        run: Get-ChildItem -Path ./target -Recurse -Filter 'llfind.exe' | Compress-Archive -DestinationPath ./${{ matrix.archive_name }}
 
       - name: Compress Linux/macOS
         if: matrix.os != 'windows-latest'
-        run: gzip -cN target/**/release/llfinder > ${{ matrix.archive_name }}
+        run: gzip -cN target/**/release/llfind > ${{ matrix.archive_name }}
 
       - uses: actions/upload-artifact@v4.4.0
         with:

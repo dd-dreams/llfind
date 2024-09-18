@@ -1,11 +1,11 @@
-# <p align="center" style="font-family: sans-monospace"> llfinder
+# <p align="center" style="font-family: sans-monospace"> llfind
 
-llfinder (Linked Library Finder) is a fast and a very minimal tool to find dynamically linked libraries
+llfind (Linked Library Finder) is a fast and a very minimal tool to find dynamically linked libraries
 in executables. The program supports the following formats: Mach-O, ELF and PE (Portable Executable).
 
 ## Installation
 
-You can install the tool using `cargo` by just running: `cargo install llfinder`.
+You can install the tool using `cargo` by just running: `cargo install llfind`.
 
 ## Building
 
