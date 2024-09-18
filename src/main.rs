@@ -8,9 +8,6 @@ Usage:
 
 Positional arguments:
     path1, path2, ...
-
-Optional arguments:
-    --version, -v      Prints the version
 ";
 
 fn main() {
