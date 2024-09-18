@@ -23,13 +23,10 @@ fn main() {
 
     for path in args.skip(1) {
         let mut file = std::fs::File::open(&path).expect(&format!("Invalid path {}", path));
+        println!("-- {path} --");
         match find::fileos(&mut file).unwrap() {
             (find::OS::Macho, bits) => {
                 let libs = find::find_macho(&mut file, bits).expect("IO Error");
-                if libs.is_empty() {
-                    println!("No dynamic libraries in {}", path);
-                    return;
-                }
                 for lib in libs {
                     println!("{}, compatibility version: {}, current version: {}, load: {}",
                         lib.path,
