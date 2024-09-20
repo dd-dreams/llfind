@@ -1,7 +1,7 @@
 # <p align="center" style="font-family: sans-monospace"> llfind
 
-llfind (Linked Library Finder) is a fast and a very minimal tool to find dynamically linked libraries
-in executables. The program supports the following formats: Mach-O, ELF and PE (Portable Executable).
+llfind (Linked Library Finder) is a fast and a very minimal tool/library to find dynamically linked libraries
+in executables. The program supports the following formats: Mach-O (including multi-architectures), ELF and PE (Portable Executable).
 
 ## Installation
 
