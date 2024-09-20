@@ -3,6 +3,10 @@ name = "llfind"
 version = "1.0.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
+description = "llfind - find dynamically linked libraries in executables. Supports ELF, Mach-O and PE."
+homepage = "https://github.com/dd-dreams/llfind"
+authors = ["dd-dreams"]
+
 
 [profile.release]
 lto = true
