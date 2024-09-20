@@ -22,7 +22,7 @@ fn main() {
         let mut file = std::fs::File::open(&path).expect(&format!("Invalid path {}", path));
         println!("-- {path} --");
         match find::fileos(&mut file).unwrap() {
-            (find::OS::Macho, bits) => {
+            (find::FileType::Macho, bits) => {
                 let libs = find::find_macho(&mut file, bits).expect("IO Error");
                 for lib in libs {
                     println!("{}, compatibility version: {}, current version: {}, load: {}",
@@ -32,13 +32,13 @@ fn main() {
                         if lib.cmd == 1 {"full path"} else if lib.cmd == 0 {"current directory load"} else {"not required"});
                 }
             }
-            (find::OS::ELF, _) => {
+            (find::FileType::ELF, _) => {
                 let libs = find::find_elf(&mut file).unwrap();
                 for lib in libs {
                     println!("{}", lib.name);
                 }
             }
-            (find::OS::PE, _) => {
+            (find::FileType::PE, _) => {
                 let libs = find::find_pe(&mut file).unwrap();
                 for lib in libs {
                     println!("{}", lib.name);

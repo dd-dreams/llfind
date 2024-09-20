@@ -16,8 +16,9 @@ use windows_sys::Win32::System::{
 type DWORD = u32;
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum OS {
+pub enum FileType {
     Macho,
+    MachoM,
     ELF,
     PE,
     Unknown,
@@ -86,19 +87,19 @@ fn read_struct<T>(file: &mut File) -> io::Result<T> {
 /// Returns the OS name.
 ///
 /// For Mach-O and ELF files it returns the arch: true if 64 bits, else false.
-pub fn fileos(file: &mut File) -> io::Result<(OS, bool)> {
+pub fn fileos(file: &mut File) -> io::Result<(FileType, bool)> {
     file.rewind()?;
     let mut line = [0u8; 4];
     file.read_exact(&mut line)?;
     match line {
-        [0x4d, 0x5a, _, _] => Ok((OS::PE, true)),
+        [0x4d, 0x5a, _, _] => Ok((FileType::PE, true)),
         // 64bit or 32bit macos
-        [0xcf, 0xfa, 0xed, 0xfe] | [0xce, 0xfa, 0xed, 0xfe] => Ok((OS::Macho, line[0] == 0xcf)),
+        [0xcf, 0xfa, 0xed, 0xfe] | [0xce, 0xfa, 0xed, 0xfe] => Ok((FileType::Macho, line[0] == 0xcf)),
         [0x7f, 0x45, 0x4c, 0x46] => {
             let bits = read_le_bytes!(file, u8);
-            Ok((OS::ELF, bits == 2))
+            Ok((FileType::ELF, bits == 2))
         },
-        _ => Ok((OS::Unknown, false))
+        _ => Ok((FileType::Unknown, false))
     }
 }
 
