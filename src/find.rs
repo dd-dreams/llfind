@@ -50,12 +50,6 @@ macro_rules! read_le_bytes {
     }};
 }
 
-macro_rules! seek_current {
-    ($offset:expr, $file:ident) => {
-        $file.seek(SeekFrom::Current($offset))?;
-    };
-}
-
 macro_rules! seek_start {
     ($offset:expr, $file:ident) => {
         $file.seek(SeekFrom::Start($offset))?;
@@ -130,7 +124,7 @@ pub fn find_macho(file: &mut File, bits: bool) -> io::Result<Vec<LibMac>> {
             // LC_LOAD_DYLIB
             0x0000000c | 0x0000000d | 0x00000018 => {
                 // Seek to current_version
-                seek_current!(8, file);
+                file.seek_relative(8)?;
                 let mut versions_bytes = [0u8; 8];
                 file.read_exact(&mut versions_bytes)?;
                 let curr_ver = format!("{}.{}.{}", u32::from_le_bytes([versions_bytes[2], versions_bytes[3], 0, 0]),
@@ -156,7 +150,7 @@ pub fn find_macho(file: &mut File, bits: bool) -> io::Result<Vec<LibMac>> {
             }
             // Other load commands
             _ => {
-                seek_current!(cmdsize - 8, file);
+                file.seek_relative(cmdsize - 8)?;
             }
         }
     }
@@ -223,7 +217,8 @@ fn rva_to_file_offset(bits: bool, number_of_sections: u16, file: &mut File, rva:
             va = rva - section_header.VirtualAddress + section_header.PointerToRawData;
         }
 
-        seek_current!(size_of::<IMAGE_SECTION_HEADER>() as i64, file);
+        file.seek_relative(size_of::<IMAGE_SECTION_HEADER>() as i64)?;
+
     }
 
     // Return to old position
