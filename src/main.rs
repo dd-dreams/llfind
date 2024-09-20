@@ -1,5 +1,8 @@
 mod find;
-use std::env::args as args_fn;
+use std::{
+    env::args as args_fn,
+    io::Seek
+};
 
 const HELP: &str = "llfind {} - find dynamically linked libraries in binaries
 
@@ -21,15 +24,32 @@ fn main() {
     for path in args.skip(1) {
         let mut file = std::fs::File::open(&path).expect(&format!("Invalid path {}", path));
         println!("-- {path} --");
+
+        file.rewind().expect("Could not rewind");
+
         match find::fileos(&mut file).unwrap() {
             (find::FileType::Macho, bits) => {
-                let libs = find::find_macho(&mut file, bits).expect("IO Error");
+                file.rewind().expect("Could not rewind");
+                let libs = find::find_macho(&mut file, bits, 0).expect("IO Error");
                 for lib in libs {
                     println!("{}, compatibility version: {}, current version: {}, load: {}",
                         lib.path,
                         lib.compat_ver,
                         lib.curr_ver,
                         if lib.cmd == 1 {"full path"} else if lib.cmd == 0 {"current directory load"} else {"not required"});
+                }
+            }
+            (find::FileType::MachoM, _) => {
+                let archs = find::find_multi_macho(&mut file).expect("IO Error");
+                for arch in archs {
+                    println!("-- {path} {:?} --", arch.cpu_type);
+                    for lib in arch.libs {
+                        println!("{}, compatibility version: {}, current version: {}, load: {}",
+                            lib.path,
+                            lib.compat_ver,
+                            lib.curr_ver,
+                            if lib.cmd == 1 {"full path"} else if lib.cmd == 0 {"current directory load"} else {"not required"});
+                    }
                 }
             }
             (find::FileType::ELF, _) => {

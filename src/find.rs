@@ -24,6 +24,28 @@ pub enum FileType {
     Unknown,
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum MacCpu {
+    ARM64,
+    I368,
+    X86_64,
+    PPC,
+    PPC64
+}
+
+impl From<&[u8]> for MacCpu {
+    fn from(val: &[u8]) -> Self {
+        match *val {
+            [0x01, 0, 0, 0x07] => MacCpu::X86_64,
+            [0x01, 0, 0, 0x0c] => MacCpu::ARM64,
+            [0,    0, 0, 0x07] => MacCpu::I368,
+            [0,    0, 0, 0x12] => MacCpu::PPC,
+            [0x01, 0, 0, 0x12] => MacCpu::PPC64,
+            _ => panic!("Unknown CPU type")
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct LibMac {
     // 0 if cmd is 0x0000000D, 1 if 0x0000000c, 13 if 0x00000018
@@ -31,6 +53,12 @@ pub struct LibMac {
     pub curr_ver: String,
     pub compat_ver: String,
     pub path: String,
+}
+
+#[derive(Debug)]
+pub struct LibMacM {
+    pub cpu_type: MacCpu,
+    pub libs: Vec<LibMac>
 }
 
 #[derive(Debug)]
@@ -48,6 +76,14 @@ macro_rules! read_le_bytes {
         let mut bytes = [0; size_of::<$typ>()];
         $file.read_exact(&mut bytes)?;
         <$typ>::from_le_bytes(bytes)
+    }};
+}
+
+macro_rules! read_be_bytes {
+    ($file:ident, $typ:ty) => {{
+        let mut bytes = [0; size_of::<$typ>()];
+        $file.read_exact(&mut bytes)?;
+        <$typ>::from_be_bytes(bytes)
     }};
 }
 
@@ -87,14 +123,14 @@ fn read_struct<T>(file: &mut File) -> io::Result<T> {
 /// Returns the OS name.
 ///
 /// For Mach-O and ELF files it returns the arch: true if 64 bits, else false.
-pub fn fileos(file: &mut File) -> io::Result<(FileType, bool)> {
-    file.rewind()?;
+pub fn fileos(file: &mut impl Read) -> io::Result<(FileType, bool)> {
     let mut line = [0u8; 4];
     file.read_exact(&mut line)?;
     match line {
         [0x4d, 0x5a, _, _] => Ok((FileType::PE, true)),
         // 64bit or 32bit macos
         [0xcf, 0xfa, 0xed, 0xfe] | [0xce, 0xfa, 0xed, 0xfe] => Ok((FileType::Macho, line[0] == 0xcf)),
+        [0xca, 0xfe, 0xba, 0xbe] => Ok((FileType::MachoM, true)),
         [0x7f, 0x45, 0x4c, 0x46] => {
             let bits = read_le_bytes!(file, u8);
             Ok((FileType::ELF, bits == 2))
@@ -103,18 +139,53 @@ pub fn fileos(file: &mut File) -> io::Result<(FileType, bool)> {
     }
 }
 
-// -- Mach-O --
-
-pub fn find_macho(file: &mut File, bits: bool) -> io::Result<Vec<LibMac>> {
+pub fn find_multi_macho(file: &mut File) -> io::Result<Vec<LibMacM>> {
     file.rewind()?;
 
+    seek_start!(4, file);
+    let num_binaries = read_be_bytes!(file, DWORD);
+
+    let mut libs = Vec::new();
+
+    for _ in 0..num_binaries {
+        let mut cpu_type = [0; 4];
+        file.read_exact(&mut cpu_type)?;
+        let cpu_type = MacCpu::from(cpu_type.as_ref());
+
+        // Read File offset
+        file.seek_relative(4)?;
+        let offset = read_be_bytes!(file, DWORD);
+
+        let pos = file.stream_position()?;
+
+        seek_start!(offset as u64, file);
+
+        fileos(file)?;
+
+        libs.push(
+            LibMacM {
+                libs: find_macho(file, cpu_type == MacCpu::ARM64 || cpu_type == MacCpu::X86_64, offset as u64)?,
+                cpu_type,
+            }
+        );
+
+        seek_start!(pos+8, file);
+    }
+
+    Ok(libs)
+}
+
+// -- Mach-O --
+
+pub fn find_macho<T: Read + Seek>(file: &mut T, bits: bool, pos: u64) -> io::Result<Vec<LibMac>>
+{
     // Seek to number of load commands
-    seek_start!(16, file);
+    seek_start!(pos + 16, file);
     let ncmds = read_le_bytes!(file, i32);
 
     // -- Skip Mach-o header --
     // If 64bits
-    seek_start!(if bits { 32 } else {28}, file);
+    file.seek_relative(if bits { 12 } else {8})?;
 
     let mut libs = Vec::with_capacity(ncmds as usize);
 
