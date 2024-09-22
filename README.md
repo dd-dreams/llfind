@@ -5,7 +5,16 @@ in executables. The program supports the following formats: Mach-O (including mu
 
 ## Installation
 
+## Cargo
+
 You can install the tool using `cargo` by just running: `cargo install llfind`.
+
+## GitHub releases
+
+Navigate to the [releases](https://github.com/dd-dreams/aft/releases) page and choose your platform.
+For Windows you can export the archive contents by double clicking.
+For Linux and macOS you can use `gzip` for extracting the contents. `gzip` should be included by default.
+Run: `gzip -dN <archive>`. You can export the program anywhere you like, but make sure you add it to PATH so you can easily access it.
 
 ## Building
 
